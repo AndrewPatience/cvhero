@@ -48,8 +48,6 @@ WiFiMulti wifiMulti;
 APPLEMIDI_CREATE_INSTANCE(WiFiUDP, AppleMIDI); // see definition in AppleMidi_Defs.h
 bool AppleMIDIConnected = false;
 
-int secs = 0;
-
 const char SSID[] = "SHM";           //  your network SSID (name)
 const char PASS[] = "hackmeplease";    // your network password
 
@@ -109,7 +107,6 @@ void setup()
   Wire.write(0xFB);
   Wire.write((uint8_t)0x00);
   Wire.endTransmission();
-
 }
 
 void loop()
@@ -162,12 +159,8 @@ void loop()
   r_button = (~values[4] & 2)>>1;
   g_button = (~values[5] & 32)>>5;
   b_button = (~values[5] & 4)>>2;
-  //turntable = ((values[2] & 1)<<5) + ((values[0] & 192)>>3);
-  //turntable += ((values[1] & 192)>>5) + ((values[2] & 128)>>7);
-  turntable = (values[2] >> 7) | ((values[1] & 0xC0)>> 5) | ((values[0] &0xC0) >> 3);
-  if (values[2] & 0x01 == 0x01) { // the sign bit
-         turntable = -(turntable ^ 0x1F)-1;
-  }
+  turntable = ((values[2] & 1)<<5) + ((values[0] & 192)>>3);
+  turntable += ((values[1] & 192)>>5) + ((values[2] & 128)>>7);
   rotary = (values[2] & 96)>>2;
   rotary += (values[3] & 224)>>5;
   minus_button = (~values[4] & 16)>>4;
@@ -199,29 +192,13 @@ void loop()
   
   // 1 Key piano
 
-  byte note = (r_depth*8);
+  //byte note = (r_depth*8);
   int pitchb = map(rotary, 0, 31, -8000, 8000);
-
-
-  
-  if (redraw_button == 1) {
-    // button pressed so send Note On
-    AppleMIDI.noteOn(note, 0x64, MIDI_CHANNEL);
-    //AppleMIDI.sendPitchBend(pitchb, MIDI_CHANNEL);
-    Serial.println("Note on!");
-    delay(10);
-    AppleMIDI.noteOff(note, 0x64, MIDI_CHANNEL);
-    delay(secs);
-    
-  }
-  else if (redraw_button == 0) {
-    // button released so semd Note Off
-    AppleMIDI.noteOff(note, 0x64, MIDI_CHANNEL);
-    Serial.println("Note off :(");
-  }
+   AppleMIDI.sendPitchBend(pitchb, MIDI_CHANNEL);
   Wire.beginTransmission(ADDRESS);
   Wire.write((uint8_t)0x00);
   Wire.endTransmission();
+  delay(50);
   
 }
 
